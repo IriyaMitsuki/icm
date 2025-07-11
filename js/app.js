@@ -148,8 +148,14 @@ class WikiApp {
     }
     
     updatePage(title, content, breadcrumb) {
-        // Обновляем заголовок
-        document.querySelector('.wiki-title').textContent = title;
+        // Обновляем заголовок только если это не главная страница с собственным заголовком
+        const titleElement = document.querySelector('.wiki-title');
+        if (!content.includes('<h1>')) {
+            titleElement.textContent = title;
+            titleElement.style.display = 'block';
+        } else {
+            titleElement.style.display = 'none';
+        }
         
         // Обновляем хлебные крошки
         document.querySelector('.breadcrumb').innerHTML = breadcrumb;

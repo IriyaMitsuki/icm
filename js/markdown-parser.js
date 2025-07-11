@@ -1,11 +1,12 @@
-// Простой Markdown парсер
+// Улучшенный Markdown парсер
 class MarkdownParser {
     constructor() {
         this.rules = [
-            // Заголовки
-            { pattern: /^### (.*$)/gm, replacement: '<h3>$1</h3>' },
-            { pattern: /^## (.*$)/gm, replacement: '<h2>$1</h2>' },
-            { pattern: /^# (.*$)/gm, replacement: '<h1>$1</h1>' },
+            // Заголовки (в правильном порядке - от большего к меньшему)
+            { pattern: /^#### (.*$)/gim, replacement: '<h4>$1</h4>' },
+            { pattern: /^### (.*$)/gim, replacement: '<h3>$1</h3>' },
+            { pattern: /^## (.*$)/gim, replacement: '<h2>$1</h2>' },
+            { pattern: /^# (.*$)/gim, replacement: '<h1>$1</h1>' },
             
             // Жирный и курсивный текст
             { pattern: /\*\*(.*?)\*\*/g, replacement: '<strong>$1</strong>' },
@@ -14,23 +15,16 @@ class MarkdownParser {
             // Ссылки
             { pattern: /\[([^\]]+)\]\(([^)]+)\)/g, replacement: '<a href="$2">$1</a>' },
             
-            // Код
+            // Код блоки
             { pattern: /```(\w+)?\n([\s\S]*?)```/g, replacement: '<pre><code class="language-$1">$2</code></pre>' },
             { pattern: /`([^`]+)`/g, replacement: '<code>$1</code>' },
-            
-            // Списки
-            { pattern: /^\- (.*$)/gm, replacement: '<li>$1</li>' },
-            { pattern: /^\d+\. (.*$)/gm, replacement: '<li>$1</li>' },
-            
-            // Параграфы (должно быть последним)
-            { pattern: /^(?!<[h|l|p|d])(.*$)/gm, replacement: '<p>$1</p>' }
         ];
     }
 
     parse(markdown) {
         let html = markdown;
         
-        // Применяем все правила
+        // Применяем правила для заголовков, жирного текста, ссылок и кода
         this.rules.forEach(rule => {
             html = html.replace(rule.pattern, rule.replacement);
         });
@@ -38,23 +32,97 @@ class MarkdownParser {
         // Обрабатываем списки
         html = this.processLists(html);
         
-        // Убираем пустые параграфы
-        html = html.replace(/<p><\/p>/g, '');
-        html = html.replace(/<p>(<[^>]+>)<\/p>/g, '$1');
+        // Обрабатываем параграфы (только для строк, которые не являются заголовками или списками)
+        html = this.processParagraphs(html);
         
         return html;
     }
     
     processLists(html) {
-        // Обрабатываем неупорядоченные списки
-        html = html.replace(/(<li>.*<\/li>)/gs, (match) => {
-            return '<ul>' + match + '</ul>';
-        });
+        // Разбиваем на строки для обработки
+        const lines = html.split('\n');
+        const result = [];
+        let inUnorderedList = false;
+        let inOrderedList = false;
         
-        // Убираем вложенные ul
-        html = html.replace(/<\/ul>\s*<ul>/g, '');
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            const trimmedLine = line.trim();
+            
+            // Неупорядоченный список
+            if (trimmedLine.match(/^- (.+)/)) {
+                if (!inUnorderedList) {
+                    result.push('<ul>');
+                    inUnorderedList = true;
+                }
+                if (inOrderedList) {
+                    result.push('</ol>');
+                    inOrderedList = false;
+                }
+                result.push(`<li>${trimmedLine.substring(2)}</li>`);
+            }
+            // Упорядоченный список
+            else if (trimmedLine.match(/^\d+\. (.+)/)) {
+                if (!inOrderedList) {
+                    result.push('<ol>');
+                    inOrderedList = true;
+                }
+                if (inUnorderedList) {
+                    result.push('</ul>');
+                    inUnorderedList = false;
+                }
+                const match = trimmedLine.match(/^\d+\. (.+)/);
+                result.push(`<li>${match[1]}</li>`);
+            }
+            // Обычная строка
+            else {
+                if (inUnorderedList) {
+                    result.push('</ul>');
+                    inUnorderedList = false;
+                }
+                if (inOrderedList) {
+                    result.push('</ol>');
+                    inOrderedList = false;
+                }
+                result.push(line);
+            }
+        }
         
-        return html;
+        // Закрываем открытые списки
+        if (inUnorderedList) result.push('</ul>');
+        if (inOrderedList) result.push('</ol>');
+        
+        return result.join('\n');
+    }
+    
+    processParagraphs(html) {
+        const lines = html.split('\n');
+        const result = [];
+        
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].trim();
+            
+            // Пропускаем пустые строки
+            if (line === '') {
+                result.push('');
+                continue;
+            }
+            
+            // Пропускаем строки, которые уже являются HTML элементами
+            if (line.match(/^<(h[1-6]|ul|ol|li|pre|code)/i)) {
+                result.push(lines[i]);
+                continue;
+            }
+            
+            // Обрабатываем как параграф только обычный текст
+            if (!line.match(/^</) && line.length > 0) {
+                result.push(`<p>${line}</p>`);
+            } else {
+                result.push(lines[i]);
+            }
+        }
+        
+        return result.join('\n');
     }
 }
 
