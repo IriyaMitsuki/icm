@@ -1,0 +1,50 @@
+{
+  "categories": [
+    {
+      "id": "tech",
+      "name": "Технологии",
+      "description": "Статьи о современных технологиях и программировании",
+      "subcategories": [
+        {
+          "id": "web-development",
+          "name": "Веб-разработка",
+          "file": "tech/web-development.md"
+        },
+        {
+          "id": "ai",
+          "name": "Искусственный интеллект",
+          "file": "tech/ai.md"
+        },
+        {
+          "id": "databases",
+          "name": "Базы данных",
+          "file": "tech/databases.md"
+        }
+      ]
+    },
+    {
+      "id": "design",
+      "name": "Дизайн",
+      "description": "Материалы по дизайну интерфейсов и пользовательскому опыту",
+      "subcategories": [
+        {
+          "id": "ui-design",
+          "name": "Дизайн интерфейсов",
+          "file": "design/ui-design.md"
+        }
+      ]
+    },
+    {
+      "id": "science",
+      "name": "Наука",
+      "description": "Научные статьи и исследования",
+      "subcategories": []
+    },
+    {
+      "id": "culture",
+      "name": "Культура",
+      "description": "Материалы о культуре и искусстве",
+      "subcategories": []
+    }
+  ]
+}
